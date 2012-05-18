@@ -1,0 +1,3 @@
+# try to use ivy to pull svnkit dependencies from a nexus repo
+# try to use ivy and deploy the jboss binaries to a nexus repo instead of a svn repo
+# add feature to replace configuration snippets in a more gracefull way than using the ant replacement task
