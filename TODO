@@ -1,3 +1,4 @@
+# Add readme to explain how to use this
 # test running from windows and fix accordingly
 # either add ant-contrib to the lib dir or add instruction to make sure nobody forgets about it
 # try to use ivy to pull svnkit dependencies from a nexus repo
