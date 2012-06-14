@@ -1,267 +1,53 @@
 <?xml version="1.0"?>
 <project name="jboss-slimmer" basedir="." default="slim">
- 	
-	<!-- Properties file used to set the parameters for the slimmed instance -->
-	<property file="instance.properties" />
-	
+    <!-- Properties file used to set the parameters for the slimmed instance -->
+    <property file="instance.properties" />
+    <property name="base.dir" value="${checkout.base.dir}/${template.name}" />
     <property name="base.template.dir" value="${checkout.base.dir}/${template.name}" />
     <property name="dest.dir" value="${jboss.home}/server/${instance.name}" />
-
-	<!-- Need to have ant and antcontrib installed in order to run the script -->
+    <!-- Need to have ant and antcontrib installed in order to run the script -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties">
-      <classpath>
-          <pathelement location="lib/ant-contrib-1.0b3.jar"/>
-      </classpath>
+        <classpath>
+            <pathelement location="lib/ant-contrib-1.0b3.jar" />
+        </classpath>
     </taskdef>
-	
-	<!-- Main method which calls each slim task -->
-	<target name="slim">
-		<record name="slim-log.txt" action="start"/>
-            <antcall target="checkout-from-svn" />
-			<antcall target="create-instance" />
-			<antcall target="disable-messaging" />
-			<antcall target="disable-ejb" />
-			<antcall target="disable-mail" />
-			<antcall target="disable-quartz" />
-			<antcall target="disable-juddi" />
-			<antcall target="disable-uuid" />
-			<antcall target="disable-bshdeployer" />
-			<antcall target="disable-jbossws" />			
-			<antcall target="disable-snmp" />
-			<antcall target="disable-mailmonitor" />
-			<antcall target="disable-farm" />
-			<antcall target="disable-jmsqueues" />
-			<antcall target="disable-corba-iiop" />
-			<antcall target="disable-usertransaction" />			
-			<antcall target="disable-hotdeploy" />
-			<antcall target="disable-console-logging" />			
-		<record name="slim-log.txt" action="stop"/>
-	</target>
-
-    <target name="clean">
-        <delete dir="${dest.dir}" />
+    <!-- Main method which calls each slim task -->
+    <target name="slim">
+        <record name="slim-log.txt" action="start" />
+        <antcall target="checkout-template-from-svn" />
+        <antcall target="create-instance" />
+        <record name="slim-log.txt" action="stop" />
     </target>
-
-    <target name="checkout-from-svn"> 
+    <target name="clean">
+        <delete dir="${template.dest.dir}" />
+    </target>
+    <target name="install-base">
+        <echo message="installing base" />
+    </target>
+    <target name="checkout-base-from-svn">
+        <delete dir="${base.template.dir}" />
+        <echo message="${repo.root.url}" />
+        <java classname="org.tmatesoft.svn.cli.SVN" dir="${checkout.base.dir}" fork="true">
+            <arg value="export" />
+            <arg value="${repo.root.url}/${template.name}" />
+            <classpath>
+                <pathelement location="lib/svnkit-1.3.7.jar" />
+                <pathelement location="lib/svnkit-cli-1.3.7.jar" />
+                <pathelement location="lib/sequence-library-1.0.0.jar" />
+            </classpath>
+        </java>
+    </target>
+    <target name="checkout-template-from-svn">
         <delete dir="${base.template.dir}" />
         <echo message="${repo.root.url}/${template.name}" />
-        <java classname="org.tmatesoft.svn.cli.SVN" 
-            dir="${checkout.base.dir}" fork="true"> 
-            <arg value="export" /> 
-            <arg value="${repo.root.url}/${template.name}" /> 
-            <classpath> 
-                <pathelement location="lib/svnkit-1.3.7.jar"/> 
-                <pathelement location="lib/svnkit-cli-1.3.7.jar"/> 
-                <pathelement location="lib/sequence-library-1.0.0.jar"/> 
-            </classpath> 
-        </java> 
-    </target> 
-
-	<!-- Create new profile -->
-	<target name="create-instance">
-        <antcall target="clean" />
-        <copy todir="${dest.dir}/" >
-            <fileset dir="${base.template.dir}" />
-		</copy>
-		<!-- we always remove hsql -->
-		<antcall target="disable-hsql" />
-	</target>
-
-	<!-- Remove JBoss messaging -->
-	<target name="disable-messaging">
-		<if>
- 			<equals arg1="${disable.messaging}" arg2="true" />
- 		<then>
-   			<delete dir="${dest.dir}/deploy/jboss-messaging.sar/" />
-			<delete file="${dest.dir}/lib/jboss-messaging.jar" />
-			<delete file="${dest.dir}/lib/jboss-messaging-client.jar" />
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove EJB -->
-	<target name="disable-ejb">
-		<if>
- 			<equals arg1="${disable.ejb}" arg2="true" />
- 		<then>
-			<delete dir="${dest.dir}/deploy/ejb3.deployer/" />
-			<delete file="${dest.dir}/deploy/ejb3-clustered-sfsbcache-service.xml/" /> 
-			<delete file="${dest.dir}/deploy/ejb3-entity-cache-service.xml" />
-			<delete file="${dest.dir}/deploy/ejb3-interceptors-aop.xml" />
-			<delete file="${dest.dir}/deploy/ejb-deployer.xml" />
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove mail service -->
-	<target name="disable-mail">
-		<if>
- 			<equals arg1="${disable.mail}" arg2="true" />
- 		<then>
-   			<delete file="${dest.dir}/deploy/mail-service.xml" />
-			<delete file="${dest.dir}/deploy/mail-ra.rar" />
-			<delete file="${dest.dir}/lib/mail.jar" />
-			<delete file="${dest.dir}/lib/mail-plugin.jar" />
-			<delete file="${dest.dir}/lib/activation.jar" />
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove JBoss scheduler -->
-	<target name="disable-quartz">
-		<if>
- 			<equals arg1="${disable.quartz}" arg2="true" />
- 		<then>
-			<delete file="${dest.dir}/deploy/scheduler-service.xml" />
-			<delete file="${dest.dir}/deploy/schedule-manager-service.xml" />			
-   			<delete file="${dest.dir}/lib/scheduler-plugin.jar" />
-			<delete file="${dest.dir}/lib/scheduler-plugin-example.jar" />			
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove Hypersonic database -->
-	<target name="disable-hsql">
-   			<delete file="${dest.dir}/deploy/hsqldb-ds.xml" />
-			<delete file="${dest.dir}/lib/hsqldb-plugin.jar" />
-			<delete file="${dest.dir}/lib/hsqldb.jar" />
-  	</target>
-
-	<!-- Remove JBoss UDDI -->
-	<target name="disable-juddi">
-		<if>
- 			<equals arg1="${disable.juddi}" arg2="true" />
- 		<then>
-   			<delete dir="${dest.dir}/deploy/juddi-service.sar/" />
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove JBoss UID key generator -->
-	<target name="disable-uuid">
-		<if>
- 			<equals arg1="${disable.uuid}" arg2="true" />
- 		<then>
-   			<delete dir="${dest.dir}/deploy/uuid-key-generator.sar/" />
-			<delete file="${dest.dir}/lib/autonumber-plugin.jar" />
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove Jboss Bean Shell deployer -->
-	<target name="disable-bshdeployer">
-		<if>
- 			<equals arg1="${disable.bshdeployer}" arg2="true" />
- 		<then>
-   			<delete file="${dest.dir}/deploy/bsh-deployer.xml" />
-			<delete file="${dest.dir}/lib/bsh-deployer.jar" />
-			<delete file="${dest.dir}/lib/bsh.jar" />
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove JBoss Web Services -->
-	<target name="disable-jbossws">
-		<if>
- 			<equals arg1="${disable.jbossws}" arg2="true" />
- 		<then>
-			<delete dir="${dest.dir}/deploy/jbossws.sar/" />
-			<delete file="${dest.dir}/lib/jboss-saaj.jar" />
-			<delete file="${dest.dir}/lib/jboss-jaxrpc.jar" />
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove JBoss SNMP agent -->
-	<target name="disable-snmp">
-		<if>
- 			<equals arg1="${disable.snmp}" arg2="true" />
- 		<then>
-   			<delete dir="${dest.dir}/deploy/snmp-adaptor.sar/" />
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Remove console/email monitor alerts -->
-	<target name="disable-mailmonitor">
-		<if>
- 			<equals arg1="${disable.mailmonitor}" arg2="true" />
- 		<then>
-   			<delete file="${dest.dir}/deploy/monitoring-service.xml" />
- 		</then>
-		</if>
-  	</target>
-	
-	<!-- Remove farm service -->
-	<target name="disable-farm">
-		<if>
- 			<equals arg1="${disable.farm}" arg2="true" />
- 		<then>
-   			<delete dir="${dest.dir}/farm/" />
-			<delete file="${dest.dir}/deploy/deploy.last/farm-service.xml" />
- 		</then>
-		</if>
-  	</target>
-	
-	<!-- Remove JMS queues -->
-	<target name="disable-jmsqueues">
-		<if>
- 			<equals arg1="${disable.jmsqueues}" arg2="true" />
- 		<then>
-   			<replace file="${dest.dir}/conf/jboss-service.xml" value="" >
-  				<replacefilter token="&lt;attribute name=&quot;JMSService&quot;&gt;jboss.messaging:service=ServerPeer&lt;/attribute&gt;" />
-			</replace>
- 		</then>
-		</if>
-  	</target>
-	
-	<!-- Remove CORBA/IIOP -->
-	<target name="disable-corba-iiop">
-		<if>
- 			<equals arg1="${disable.corba-iiop}" arg2="true" />
- 		<then>
-   			<replace file="${dest.dir}/conf/jboss-service.xml" value="" >
-  				<replacefilter token="&lt;attribute name=&quot;RMI_IIOPService&quot;&gt;jboss:service=CorbaORB&lt;/attribute&gt;" />
-			</replace>
- 		</then>
-		</if>
-  	</target>
-	
-	<!-- Remove client user transaction -->
-	<target name="disable-usertransaction">
-		<if>
- 			<equals arg1="${disable-usertransaction}" arg2="true" />
- 		<then>
-   			<replace file="${dest.dir}/conf/jboss-service.xml" value="" >
-  				<replacefilter token="&lt;attribute name=&quot;UserTransactionService&quot;&gt;jboss:service=ClientUserTransaction&lt;/attribute&gt;" />
-			</replace>
- 		</then>
-		</if>
-  	</target>
-
-	<!-- Disable hot deploy -->
-	<target name="disable-hotdeploy">
-		<if>
- 			<equals arg1="${disable-hotdeploy}" arg2="true" />
- 		<then>
-   			<replace file="${dest.dir}/conf/jboss-service.xml" value="&lt;attribute name=&quot;ScanEnabled&quot;&gt;false&lt;/attribute&gt;" >
-  				<replacefilter token="&lt;attribute name=&quot;ScanEnabled&quot;&gt;true&lt;/attribute&gt;" />
-			</replace>
- 		</then>
-		</if>
-  	</target>
-	
-	<!-- Configure logging -->
-	<target name="disable-console-logging">
-		<if>			
-			<equals arg1="${logging.console.disable}" arg2="true" />
-		<then>						
-            <replace 
-                file="${dest.dir}/conf/jboss-log4j.xml"
-                token="&lt;!-- &lt;appender-ref ref=&quot;CONSOLE&quot;/&gt; --&gt;"
-                value="&lt;priority value=&quot;INFO&quot;/&gt;" 
-            />
-		</then>
-		</if>   			
-  	</target>
+        <java classname="org.tmatesoft.svn.cli.SVN" dir="${checkout.base.dir}" fork="true">
+            <arg value="export" />
+            <arg value="${repo.root.url}/${template.name}" />
+            <classpath>
+                <pathelement location="lib/svnkit-1.3.7.jar" />
+                <pathelement location="lib/svnkit-cli-1.3.7.jar" />
+                <pathelement location="lib/sequence-library-1.0.0.jar" />
+            </classpath>
+        </java>
+    </target>
 </project>
