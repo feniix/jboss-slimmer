@@ -10,7 +10,7 @@
 	<!-- Need to have ant and antcontrib installed in order to run the script -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties">
       <classpath>
-          <pathelement location="/usr/share/java/ant-contrib-1.0b3.jar"/>
+          <pathelement location="lib/ant-contrib-1.0b3.jar"/>
       </classpath>
     </taskdef>
 	
